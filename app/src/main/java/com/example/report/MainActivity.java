@@ -8,6 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
@@ -27,30 +28,30 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         sessionManager = new SessionManager(this);
-
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
         setSupportActionBar(binding.toolbar);
 
-        // Setup Navigation
-        navController = Navigation.findNavController(this, R.id.nav_host_fragment);
-        
-        // Configure top level destinations
-        appBarConfiguration = new AppBarConfiguration.Builder(
-            R.id.navigation_map,
-            R.id.navigation_report,
-            R.id.navigation_history,
-            R.id.navigation_profile
-        ).build();
 
-        // Setup ActionBar with NavController
-        NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
-        
-        // Setup Bottom Navigation with NavController
-        NavigationUI.setupWithNavController(binding.bottomNavigation, navController);
+        NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.nav_host_fragment);
 
-        // Request permissions if needed
+        if (navHostFragment != null) {
+            navController = navHostFragment.getNavController();
+
+
+            appBarConfiguration = new AppBarConfiguration.Builder(
+                    R.id.navigation_map,
+                    R.id.navigation_report,
+                    R.id.navigation_history,
+                    R.id.navigation_profile
+            ).build();
+
+            NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
+            NavigationUI.setupWithNavController(binding.bottomNavigation, navController);
+        }
+
         if (!PermissionUtils.hasRequiredPermissions(this)) {
             PermissionUtils.requestRequiredPermissions(this);
         }
