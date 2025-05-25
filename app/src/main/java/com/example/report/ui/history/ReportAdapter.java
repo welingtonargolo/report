@@ -1,5 +1,6 @@
 package com.example.report.ui.history;
 
+import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.view.LayoutInflater;
@@ -65,6 +66,7 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
             this.binding = binding;
         }
 
+        @SuppressLint("ResourceType")
         void bind(Problem problem) {
             // Set category and description
             binding.categoryText.setText(problem.getCategoryName());
