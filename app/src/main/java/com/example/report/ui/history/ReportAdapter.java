@@ -122,7 +122,7 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
                     chipColor = android.graphics.Color.parseColor("#757575"); // Gray
                     break;
             }
-            binding.statusChip.setChipBackgroundColorResource(chipColor);
+            binding.statusChip.setChipBackgroundColor(android.content.res.ColorStateList.valueOf(chipColor));
         }
     }
 }
