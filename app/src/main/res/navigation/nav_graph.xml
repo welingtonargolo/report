@@ -17,7 +17,11 @@
     <fragment
         android:id="@+id/navigation_history"
         android:name="com.example.report.ui.history.HistoryFragment"
-        android:label="Histórico" />
+        android:label="Histórico" >
+        <action
+            android:id="@+id/action_navigation_history_to_navigation_report"
+            app:destination="@id/navigation_report" />
+    </fragment>
 
     <fragment
         android:id="@+id/navigation_profile"
