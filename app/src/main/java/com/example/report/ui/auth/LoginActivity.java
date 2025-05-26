@@ -22,7 +22,7 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Check if user is already logged in
+
         sessionManager = new SessionManager(this);
         if (sessionManager.isLoggedIn()) {
             startActivity(new Intent(this, MainActivity.class));
@@ -67,10 +67,9 @@ public class LoginActivity extends AppCompatActivity {
             long userId = cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_ID));
             String name = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_NAME));
             
-            // Create login session
+      
             sessionManager.createLoginSession(userId, name, email);
 
-            // Start MainActivity
             startActivity(new Intent(this, MainActivity.class));
             finish();
         } else {
