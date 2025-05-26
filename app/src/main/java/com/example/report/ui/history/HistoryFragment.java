@@ -75,7 +75,7 @@ public class HistoryFragment extends Fragment implements ReportAdapter.OnReportC
             problem.setDatetime(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_DATETIME)));
             problem.setStatus(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_STATUS)));
 
-            // TODO: Load category name for display in adapter
+          
             problem.setCategoryName(getCategoryName(problem.getCategoryId()));
 
             reports.add(problem);
@@ -109,7 +109,36 @@ public class HistoryFragment extends Fragment implements ReportAdapter.OnReportC
 
     @Override
     public void onReportClick(Problem problem) {
-        // TODO: Implement detail view or status update simulation
+        
+        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
+        builder.setTitle("Opções do Report");
+        String[] options = {"Editar", "Deletar"};
+        builder.setItems(options, (dialog, which) -> {
+            if (which == 0) {
+                
+                androidx.navigation.NavController navController = androidx.navigation.Navigation.findNavController(requireView());
+                android.os.Bundle bundle = new android.os.Bundle();
+                bundle.putLong("reportId", problem.getId());
+                navController.navigate(com.example.report.R.id.action_navigation_history_to_navigation_report, bundle);
+            } else if (which == 1) {
+               
+                deleteReport(problem.getId());
+            }
+        });
+        builder.show();
+    }
+
+    private void deleteReport(long reportId) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        String selection = DatabaseHelper.COLUMN_ID + " = ?";
+        String[] selectionArgs = {String.valueOf(reportId)};
+        int deletedRows = db.delete(DatabaseHelper.TABLE_PROBLEMS, selection, selectionArgs);
+        if (deletedRows > 0) {
+            android.widget.Toast.makeText(requireContext(), "Report deletado com sucesso", android.widget.Toast.LENGTH_SHORT).show();
+            loadReports();
+        } else {
+            android.widget.Toast.makeText(requireContext(), "Erro ao deletar report", android.widget.Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
