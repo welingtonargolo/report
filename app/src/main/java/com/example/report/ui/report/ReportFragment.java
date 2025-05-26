@@ -49,6 +49,8 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
     private Bitmap photoBitmap;
     private Location currentLocation;
 
+    private long editingReportId = -1;
+
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentReportBinding.inflate(inflater, container, false);
@@ -66,6 +68,12 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
         setupMap();
         setupCategoryDropdown();
         setupClickListeners();
+
+
+        if (getArguments() != null && getArguments().containsKey("reportId")) {
+            editingReportId = getArguments().getLong("reportId");
+            loadReportForEditing(editingReportId);
+        }
     }
 
     private void setupMap() {
@@ -160,14 +168,14 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
             return;
         }
 
-        // Get category ID
+       
         long categoryId = getCategoryId(category);
         if (categoryId == -1) {
             Toast.makeText(requireContext(), "Categoria inválida", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Convert bitmap to byte array
+       
         byte[] photoData = null;
         if (photoBitmap != null) {
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -175,33 +183,47 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
             photoData = stream.toByteArray();
         }
 
-        // Get current timestamp
+        
         String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
                 .format(new Date());
 
-        // Insert report
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(DatabaseHelper.COLUMN_CATEGORY_ID, categoryId);
-        values.put(DatabaseHelper.COLUMN_USER_ID, 1); // TODO: Get actual user ID
+        values.put(DatabaseHelper.COLUMN_USER_ID, 1); 
         values.put(DatabaseHelper.COLUMN_DESCRIPTION, description);
         values.put(DatabaseHelper.COLUMN_PHOTO, photoData);
         values.put(DatabaseHelper.COLUMN_LATITUDE, currentLocation.getLatitude());
         values.put(DatabaseHelper.COLUMN_LONGITUDE, currentLocation.getLongitude());
         values.put(DatabaseHelper.COLUMN_DATETIME, timestamp);
-        values.put(DatabaseHelper.COLUMN_STATUS, "Pendente");
 
-        long newRowId = db.insert(DatabaseHelper.TABLE_PROBLEMS, null, values);
+        if (editingReportId == -1) {
+           
+            values.put(DatabaseHelper.COLUMN_STATUS, "Pendente");
+            long newRowId = db.insert(DatabaseHelper.TABLE_PROBLEMS, null, values);
 
-        if (newRowId != -1) {
-            notificationHelper.showReportCreatedNotification(
-                "Problema Reportado",
-                "Seu reporte foi enviado com sucesso!"
-            );
-            clearForm();
-            Toast.makeText(requireContext(), "Reporte enviado com sucesso", Toast.LENGTH_SHORT).show();
+            if (newRowId != -1) {
+                notificationHelper.showReportCreatedNotification(
+                    "Problema Reportado",
+                    "Seu reporte foi enviado com sucesso!"
+                );
+                clearForm();
+                Toast.makeText(requireContext(), "Reporte enviado com sucesso", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(requireContext(), "Erro ao enviar reporte", Toast.LENGTH_SHORT).show();
+            }
         } else {
-            Toast.makeText(requireContext(), "Erro ao enviar reporte", Toast.LENGTH_SHORT).show();
+          
+            String selection = DatabaseHelper.COLUMN_ID + " = ?";
+            String[] selectionArgs = {String.valueOf(editingReportId)};
+            values.put(DatabaseHelper.COLUMN_STATUS, "Pendente"); 
+            int count = db.update(DatabaseHelper.TABLE_PROBLEMS, values, selection, selectionArgs);
+
+            if (count > 0) {
+                Toast.makeText(requireContext(), "Reporte atualizado com sucesso", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(requireContext(), "Erro ao atualizar reporte", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
@@ -235,11 +257,69 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
         binding.descriptionInput.setText("");
         binding.photoPreview.setImageResource(android.R.drawable.ic_menu_camera);
         photoBitmap = null;
+        editingReportId = -1;
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
+    }
+
+    private void loadReportForEditing(long reportId) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        String[] projection = {
+            DatabaseHelper.COLUMN_ID,
+            DatabaseHelper.COLUMN_CATEGORY_ID,
+            DatabaseHelper.COLUMN_DESCRIPTION,
+            DatabaseHelper.COLUMN_PHOTO,
+            DatabaseHelper.COLUMN_LATITUDE,
+            DatabaseHelper.COLUMN_LONGITUDE,
+            DatabaseHelper.COLUMN_DATETIME,
+            DatabaseHelper.COLUMN_STATUS
+        };
+        String selection = DatabaseHelper.COLUMN_ID + " = ?";
+        String[] selectionArgs = {String.valueOf(reportId)};
+
+        try (Cursor cursor = db.query(DatabaseHelper.TABLE_PROBLEMS, projection, selection, selectionArgs, null, null, null)) {
+            if (cursor.moveToFirst()) {
+                long categoryId = cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_CATEGORY_ID));
+                String description = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_DESCRIPTION));
+                byte[] photo = cursor.getBlob(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PHOTO));
+                double latitude = cursor.getDouble(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_LATITUDE));
+                double longitude = cursor.getDouble(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_LONGITUDE));
+                String datetime = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_DATETIME));
+                String status = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_STATUS));
+
+               
+                String categoryName = getCategoryName(categoryId);
+
+        
+                binding.categoryInput.setText(categoryName);
+                binding.descriptionInput.setText(description);
+                if (photo != null) {
+                    android.graphics.Bitmap bitmap = android.graphics.BitmapFactory.decodeByteArray(photo, 0, photo.length);
+                    binding.photoPreview.setImageBitmap(bitmap);
+                    photoBitmap = bitmap;
+                }
+             
+                currentLocation = null;
+            }
+        }
+    }
+
+    private String getCategoryName(long categoryId) {
+        String categoryName = "";
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        String[] projection = {DatabaseHelper.COLUMN_NAME};
+        String selection = DatabaseHelper.COLUMN_ID + " = ?";
+        String[] selectionArgs = {String.valueOf(categoryId)};
+
+        try (Cursor cursor = db.query(DatabaseHelper.TABLE_CATEGORIES, projection, selection, selectionArgs, null, null, null)) {
+            if (cursor.moveToFirst()) {
+                categoryName = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_NAME));
+            }
+        }
+        return categoryName;
     }
 }
