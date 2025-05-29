@@ -68,14 +68,14 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
 
         @SuppressLint("ResourceType")
         void bind(Problem problem) {
-            // Set category and description
+
             binding.categoryText.setText(problem.getCategoryName());
             binding.descriptionText.setText(problem.getDescription());
             
-            // Set status chip
+
             binding.statusChip.setText(problem.getStatus());
 
-            // Format and set date
+
             try {
                 SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
                 SimpleDateFormat outputFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
@@ -87,7 +87,7 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
                 binding.dateText.setText(problem.getDatetime());
             }
 
-            // Set photo if available
+
             if (problem.getPhoto() != null) {
                 Bitmap bitmap = BitmapFactory.decodeByteArray(
                     problem.getPhoto(),
@@ -99,14 +99,14 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
                 binding.reportImage.setImageResource(android.R.drawable.ic_menu_camera);
             }
 
-            // Set click listener
+
             itemView.setOnClickListener(v -> {
                 if (listener != null) {
                     listener.onReportClick(problem);
                 }
             });
 
-            // Set status chip color based on status
+
             int chipColor;
             switch (problem.getStatus().toLowerCase()) {
                 case "resolvido":
