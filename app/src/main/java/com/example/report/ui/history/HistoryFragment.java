@@ -113,18 +113,32 @@ public class HistoryFragment extends Fragment implements ReportAdapter.OnReportC
         androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
         builder.setTitle("Opções do Report");
         String[] options = {"Editar", "Deletar"};
-        builder.setItems(options, (dialog, which) -> {
-            if (which == 0) {
-                
-                androidx.navigation.NavController navController = androidx.navigation.Navigation.findNavController(requireView());
-                android.os.Bundle bundle = new android.os.Bundle();
-                bundle.putLong("reportId", problem.getId());
-                navController.navigate(com.example.report.R.id.action_navigation_history_to_navigation_report, bundle);
-            } else if (which == 1) {
-               
-                deleteReport(problem.getId());
-            }
-        });
+        if (problem.getStatus().equalsIgnoreCase("Pendente")) {
+            String[] optionsWithResolve = {"Editar", "Marcar como Resolvido", "Deletar"};
+            builder.setItems(optionsWithResolve, (dialog, which) -> {
+                if (which == 0) {
+                    androidx.navigation.NavController navController = androidx.navigation.Navigation.findNavController(requireView());
+                    android.os.Bundle bundle = new android.os.Bundle();
+                    bundle.putLong("reportId", problem.getId());
+                    navController.navigate(com.example.report.R.id.action_navigation_history_to_navigation_report_edit, bundle);
+                } else if (which == 1) {
+                    markReportAsResolved(problem.getId());
+                } else if (which == 2) {
+                    deleteReport(problem.getId());
+                }
+            });
+        } else {
+            builder.setItems(options, (dialog, which) -> {
+                if (which == 0) {
+                    androidx.navigation.NavController navController = androidx.navigation.Navigation.findNavController(requireView());
+                    android.os.Bundle bundle = new android.os.Bundle();
+                    bundle.putLong("reportId", problem.getId());
+                    navController.navigate(com.example.report.R.id.action_navigation_history_to_navigation_report_edit, bundle);
+                } else if (which == 1) {
+                    deleteReport(problem.getId());
+                }
+            });
+        }
         builder.show();
     }
 
@@ -145,5 +159,27 @@ public class HistoryFragment extends Fragment implements ReportAdapter.OnReportC
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
+    }
+
+    private void markReportAsResolved(long reportId) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        android.content.ContentValues values = new android.content.ContentValues();
+        values.put(DatabaseHelper.COLUMN_STATUS, "Resolvido");
+
+        String selection = DatabaseHelper.COLUMN_ID + " = ?";
+        String[] selectionArgs = {String.valueOf(reportId)};
+
+        int count = db.update(DatabaseHelper.TABLE_PROBLEMS, values, selection, selectionArgs);
+        if (count > 0) {
+            android.widget.Toast.makeText(requireContext(), "Report marcado como resolvido", android.widget.Toast.LENGTH_SHORT).show();
+            sendStatusChangeNotification(reportId);
+            loadReports();
+        } else {
+            android.widget.Toast.makeText(requireContext(), "Erro ao atualizar status do report", android.widget.Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void sendStatusChangeNotification(long reportId) {
+        android.widget.Toast.makeText(requireContext(), "Notificação: Status do report alterado para Resolvido", android.widget.Toast.LENGTH_LONG).show();
     }
 }
