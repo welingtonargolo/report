@@ -21,7 +21,14 @@
         <action
             android:id="@+id/action_navigation_history_to_navigation_report"
             app:destination="@id/navigation_report" />
+        <action
+            android:id="@+id/action_navigation_history_to_navigation_report_edit"
+            app:destination="@id/navigation_report_edit" />
     </fragment>
+    <fragment
+        android:id="@+id/navigation_report_edit"
+        android:name="com.example.report.ui.report.ReportEditFragment"
+        android:label="Editar Reporte" />
 
     <fragment
         android:id="@+id/navigation_profile"
