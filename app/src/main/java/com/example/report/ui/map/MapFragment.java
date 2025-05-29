@@ -19,7 +19,17 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.Marker;
+
+import com.example.report.R;
 
 public class MapFragment extends Fragment implements OnMapReadyCallback {
 
@@ -58,6 +68,35 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         googleMap = map;
         setupMap();
         loadProblems();
+
+        googleMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
+            @Override
+            public View getInfoWindow(Marker marker) {
+                return null; 
+            }
+
+            @Override
+            public View getInfoContents(Marker marker) {
+                View infoView = LayoutInflater.from(requireContext()).inflate(R.layout.custom_info_window, null);
+                TextView title = infoView.findViewById(R.id.title);
+                TextView snippet = infoView.findViewById(R.id.snippet);
+                ImageView photoView = infoView.findViewById(R.id.photo);
+
+                title.setText(marker.getTitle());
+                snippet.setText(marker.getSnippet());
+
+                Object tag = marker.getTag();
+                if (tag != null && tag instanceof byte[]) {
+                    byte[] photoBytes = (byte[]) tag;
+                    Bitmap bitmap = BitmapFactory.decodeByteArray(photoBytes, 0, photoBytes.length);
+                    photoView.setImageBitmap(bitmap);
+                } else {
+                    photoView.setImageResource(R.drawable.ic_launcher_foreground);
+                }
+
+                return infoView;
+            }
+        });
     }
 
     private void setupMap() {
@@ -67,7 +106,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                 googleMap.getUiSettings().setMyLocationButtonEnabled(false);
                 googleMap.getUiSettings().setZoomControlsEnabled(true);
 
-                // Move to current location when map is ready
+              
                 moveToCurrentLocation();
             } catch (SecurityException e) {
                 e.printStackTrace();
@@ -85,7 +124,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
             @Override
             public void onLocationError(String error) {
-                // Handle error
+              
             }
         });
     }
@@ -97,7 +136,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             DatabaseHelper.COLUMN_DESCRIPTION,
             DatabaseHelper.COLUMN_LATITUDE,
             DatabaseHelper.COLUMN_LONGITUDE,
-            DatabaseHelper.COLUMN_STATUS
+            DatabaseHelper.COLUMN_STATUS,
+            DatabaseHelper.COLUMN_PHOTO
         };
 
         Cursor cursor = db.query(
@@ -115,12 +155,24 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             double longitude = cursor.getDouble(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_LONGITUDE));
             String description = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_DESCRIPTION));
             String status = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_STATUS));
+            byte[] photo = cursor.getBlob(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PHOTO));
 
             LatLng position = new LatLng(latitude, longitude);
-            googleMap.addMarker(new MarkerOptions()
+            com.google.android.gms.maps.model.MarkerOptions markerOptions = new com.google.android.gms.maps.model.MarkerOptions()
                 .position(position)
                 .title(description)
-                .snippet("Status: " + status));
+                .snippet("Status: " + status);
+
+            if ("Resolvido".equalsIgnoreCase(status)) {
+                markerOptions.icon(com.google.android.gms.maps.model.BitmapDescriptorFactory.defaultMarker(com.google.android.gms.maps.model.BitmapDescriptorFactory.HUE_GREEN));
+            } else {
+                markerOptions.icon(com.google.android.gms.maps.model.BitmapDescriptorFactory.defaultMarker(com.google.android.gms.maps.model.BitmapDescriptorFactory.HUE_RED));
+            }
+
+            com.google.android.gms.maps.model.Marker marker = googleMap.addMarker(markerOptions);
+            if (marker != null) {
+                marker.setTag(photo);
+            }
         }
         cursor.close();
     }
