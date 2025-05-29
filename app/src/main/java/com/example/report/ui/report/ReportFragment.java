@@ -65,23 +65,41 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
         locationHelper = new LocationHelper(requireContext());
         notificationHelper = new NotificationHelper(requireContext());
 
-        setupMap();
-        setupCategoryDropdown();
-        setupClickListeners();
+        // Set location update listener
+        locationHelper.setLocationUpdateListener(new LocationHelper.OnLocationUpdateListener() {
+            @Override
+            public void onLocationUpdate(Location location) {
+                currentLocation = location;
+            }
 
+            @Override
+            public void onLocationError(String error) {
+                Toast.makeText(requireContext(), "Erro ao obter localização: " + error, Toast.LENGTH_SHORT).show();
+            }
+        });
 
         if (getArguments() != null && getArguments().containsKey("reportId")) {
             editingReportId = getArguments().getLong("reportId");
             loadReportForEditing(editingReportId);
         }
+
+        // Start location updates only if creating a new report
+        if (editingReportId == -1) {
+            locationHelper.startLocationUpdates();
+        }
+
+        setupMap();
+        setupCategoryDropdown();
+        setupClickListeners();
     }
 
     private void setupMap() {
-        SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager()
-                .findFragmentById(com.example.report.R.id.locationMap);
-        if (mapFragment != null) {
-            mapFragment.getMapAsync(this);
-        }
+        // Disable map setup to prevent location editing in report editing UI
+        // SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager()
+        //         .findFragmentById(com.example.report.R.id.locationMap);
+        // if (mapFragment != null) {
+        //     mapFragment.getMapAsync(this);
+        // }
     }
 
     private void setupCategoryDropdown() {
@@ -136,22 +154,8 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
 
     @Override
     public void onMapReady(@NonNull GoogleMap map) {
-        googleMap = map;
-        locationHelper.getCurrentLocation(new LocationHelper.OnLocationUpdateListener() {
-            @Override
-            public void onLocationUpdate(Location location) {
-                currentLocation = location;
-                LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-                googleMap.clear();
-                googleMap.addMarker(new MarkerOptions().position(latLng).title("Local do Problema"));
-                googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f));
-            }
-
-            @Override
-            public void onLocationError(String error) {
-                Toast.makeText(requireContext(), "Erro ao obter localização", Toast.LENGTH_SHORT).show();
-            }
-        });
+        // Disable map interaction to prevent location editing
+        // No implementation
     }
 
     private void submitReport() {
@@ -264,6 +268,10 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
+        // Stop location updates to avoid memory leaks
+        if (locationHelper != null) {
+            locationHelper.stopLocationUpdates();
+        }
     }
 
     private void loadReportForEditing(long reportId) {
