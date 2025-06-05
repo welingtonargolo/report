@@ -110,16 +110,16 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
             int chipColor;
             switch (problem.getStatus().toLowerCase()) {
                 case "resolvido":
-                    chipColor = android.graphics.Color.parseColor("#4CAF50"); // Green
+                    chipColor = android.graphics.Color.parseColor("#4CAF50");
                     break;
                 case "em análise":
-                    chipColor = android.graphics.Color.parseColor("#2196F3"); // Blue
+                    chipColor = android.graphics.Color.parseColor("#2196F3");
                     break;
                 case "em andamento":
-                    chipColor = android.graphics.Color.parseColor("#FF9800"); // Orange
+                    chipColor = android.graphics.Color.parseColor("#FF9800");
                     break;
                 default:
-                    chipColor = android.graphics.Color.parseColor("#757575"); // Gray
+                    chipColor = android.graphics.Color.parseColor("#757575");
                     break;
             }
             binding.statusChip.setChipBackgroundColor(android.content.res.ColorStateList.valueOf(chipColor));
