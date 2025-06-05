@@ -51,10 +51,10 @@ public class MainActivity extends AppCompatActivity {
                 Log.w(TAG, "Erro ao configurar Toolbar", e);
             }
 
-            // Configuração de navegação segura
+
             setupNavigation();
 
-            // Verificação de permissões com tratamento
+
             checkPermissions();
 
         } catch (Exception mainException) {
