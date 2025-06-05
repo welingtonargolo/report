@@ -62,7 +62,11 @@ public class NotificationHelper {
             .setAutoCancel(true)
             .setContentIntent(pendingIntent);
 
-        notificationManager.notify(NOTIFICATION_ID_NEW_REPORT, builder.build());
+        if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            notificationManager.notify(NOTIFICATION_ID_NEW_REPORT, builder.build());
+        } else {
+         
+        }
     }
 
     public void showStatusUpdateNotification(String title, String description) {
